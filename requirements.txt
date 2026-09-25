@@ -1,0 +1,11 @@
+# Pinned dependency set that deterministically reproduces every number in the
+# SoftwareX paper (solderbench v0.1.0, seed=42):
+#   RandomForest(B6) test accuracy = 0.9440, macro-F1 = 0.9439 (Table 3/4),
+#   single-feature macro-F1 (Table 5), and the Figure 1 confusion matrix.
+# Verified on Python 3.13 with the exact versions below.
+# Regenerate all artefacts with:  python examples/run_benchmark.py
+numpy==2.5.2
+scipy==1.18.0
+pandas==3.0.6
+scikit-learn==1.9.0
+matplotlib==3.11.1

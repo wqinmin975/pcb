@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+
+# Benchmark artefacts (regenerate with: python examples/run_benchmark.py)
+results/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# WorkBuddy project data
+.workbuddy/
+
+# Node (docx tooling) and other generated output
+node_modules/
+did_output/
+baseline_output/
+
+# LaTeX / paper build artefacts (keep only the .tex source and the camera-ready PDF)
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.spl
+paper/solderbench_r*.pdf
+paper/solderbench_softwarex_draft.pdf
+paper/solderbench_softwarex_draft_v*.pdf
+!paper/solderbench_softwarex_draft_v14.pdf

@@ -1,0 +1,46 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "name": "solderbench",
+  "description": "An open-source synthetic benchmark for PCB solder-joint defect inspection algorithm development. It provides a configurable NumPy-based point-cloud simulator of five solder-joint classes (good, insufficient solder, excessive solder, bridging, collapse), a seven-feature geometric descriptor extractor, six baseline classifiers, and reproducible comparison and ablation experiment runners.",
+  "version": "0.1.0",
+  "identifier": "https://doi.org/10.5281/zenodo.XXXXXXX",
+  "codeRepository": "https://github.com/wqinmin975/pcb",
+  "license": "https://spdx.org/licenses/MIT",
+  "programmingLanguage": {
+    "@type": "ComputerLanguage",
+    "name": "Python",
+    "version": ">=3.8"
+  },
+  "runtimePlatform": "Python 3",
+  "softwareRequirements": [
+    "numpy",
+    "scipy",
+    "pandas",
+    "scikit-learn",
+    "matplotlib"
+  ],
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": "Author",
+      "familyName": "Name",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Affiliation Placeholder"
+      }
+    }
+  ],
+  "keywords": [
+    "PCB",
+    "solder joint",
+    "defect inspection",
+    "point cloud",
+    "synthetic data",
+    "benchmark",
+    "machine learning"
+  ],
+  "applicationCategory": "Scientific/Engineering",
+  "operatingSystem": ["Windows", "Linux", "macOS"],
+  "dateCreated": "2025-09-23"
+}
