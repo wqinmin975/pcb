@@ -11,7 +11,7 @@ Public API
 - :func:`load_dataset` -- one-call dataset builder (real-data entry point).
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .baselines import get_baselines
 from .data import load_dataset

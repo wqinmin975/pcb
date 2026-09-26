@@ -140,8 +140,8 @@ If you use `solderbench` in your research, please cite:
              solder-joint defect inspection algorithm development},
   author  = {Author Name},
   year    = {2025},
-  version = {0.1.0},
-  doi     = {10.5281/zenodo.XXXXXXX},  % TODO: Zenodo DOI after archival
+  version = {0.1.1},
+  doi     = {10.5281/zenodo.22959193},
   url     = {https://github.com/wqinmin975/pcb}
 }
 ```
