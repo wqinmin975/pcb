@@ -23,11 +23,38 @@
   "author": [
     {
       "@type": "Person",
-      "givenName": "Author",
-      "familyName": "Name",
+      "givenName": "Qinmin",
+      "familyName": "Wang",
       "affiliation": {
         "@type": "Organization",
-        "name": "Affiliation Placeholder"
+        "name": "School of Computer Science and Artificial Intelligence, Guangdong University of Science and Technology, Dongguan, China"
+      }
+    },
+    {
+      "@type": "Person",
+      "givenName": "Zixin",
+      "familyName": "Wang",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "School of Electronic and Communication Engineering, Tianjin Normal University, Tianjin, China"
+      }
+    },
+    {
+      "@type": "Person",
+      "givenName": "Hongyuan",
+      "familyName": "Wang",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "School of Computer Science and Artificial Intelligence, Guangdong University of Science and Technology, Dongguan, China"
+      }
+    },
+    {
+      "@type": "Person",
+      "givenName": "Zongzhong",
+      "familyName": "Wang",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "School of Electromechanical Engineering, Guangdong University of Technology, Guangzhou, China"
       }
     }
   ],

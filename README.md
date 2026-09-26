@@ -138,7 +138,7 @@ If you use `solderbench` in your research, please cite:
 @software{solderbench,
   title   = {solderbench: An open-source synthetic benchmark for PCB
              solder-joint defect inspection algorithm development},
-  author  = {Author Name},
+  author  = {Qinmin Wang, Zixin Wang, Hongyuan Wang, and Zongzhong Wang},
   year    = {2025},
   version = {0.1.1},
   doi     = {10.5281/zenodo.22959193},
@@ -152,4 +152,7 @@ MIT, see [LICENSE](LICENSE).
 
 ## Authors
 
-Author Name (Affiliation Placeholder) — author@example.com
+- **Qinmin Wang** — School of Computer Science and Artificial Intelligence, Guangdong University of Science and Technology, Dongguan, China (wangqinmin@gdust.edu.cn)
+- **Zixin Wang** — School of Electronic and Communication Engineering, Tianjin Normal University, Tianjin, China (396514839@qq.com)
+- **Hongyuan Wang** — School of Computer Science and Artificial Intelligence, Guangdong University of Science and Technology, Dongguan, China
+- **Zongzhong Wang** — School of Electromechanical Engineering, Guangdong University of Technology, Guangzhou, China (wangzz@gdut.edu.cn, corresponding author)

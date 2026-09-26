@@ -13,7 +13,7 @@
 \title{Solderbench: An open-source synthetic benchmark for PCB solder-joint defect inspection algorithm development}
 \author[1]{Qinmin Wang\fnref{fn1}}
 \author[2]{Zixin Wang\fnref{fn2}}
-\author[1]{Hongyuan Wang\fnref{fn3}}
+\author[1]{Hongyuan Wang}
 \author[3]{Zongzhong Wang\corref{cor1}}
 \address[1]{School of Computer Science and Artificial Intelligence, Guangdong University of Science and Technology, Dongguan, China}
 \address[2]{School of Electronic and Communication Engineering, Tianjin Normal University, Tianjin, China}
@@ -21,7 +21,6 @@
 \cortext[cor1]{Corresponding author at School of Electromechanical Engineering, Guangdong University of Technology, Guangzhou, China. E-mail: wangzz@gdut.edu.cn}
 \fntext[fn1]{E-mail: wangqinmin@gdust.edu.cn}
 \fntext[fn2]{E-mail: 396514839@qq.com}
-\fntext[fn3]{E-mail: wanghongyuan@gdust.edu.cn}
 \begin{abstract}
 Automated optical inspection (AOI) of solder joints is a critical quality-control step in printed circuit board (PCB) assembly, and three-dimensional (3D) point-cloud inspection is increasingly adopted because solder quality is essentially a volumetric property. However, publicly available 3D solder-joint datasets are essentially nonexistent: industrial scan data are proprietary, so new inspection algorithms are difficult to compare fairly. We present Solderbench, an open-source, pure-Python synthetic benchmark for developing and evaluating 3D solder-joint defect inspection algorithms. Solderbench provides (i) a parametric point-cloud generator that simulates five joint classes (good, insufficient, excessive, bridging, and collapse) with more than fifteen controllable parameters and \mbox{seed-level}, point-wise reproducibility; (ii) a seven-dimensional geometric feature extractor; (iii) six baseline classifiers, including a re-implementation of the industrial volume-threshold rule S3DA; and (iv) automated comparison and ablation runners that export CSV, LaTeX, and figure artifacts. On a 1250-sample benchmark (seed 42), a random forest reaches 0.9440 accuracy and 0.9439 macro-$F_1$, and feature ablation identifies height variance as the most informative descriptor. Synthetic results serve as a controlled, reproducible proxy for algorithm development, yet final validation must be performed using real-world production scan data.
 \end{abstract}
@@ -176,15 +175,11 @@ This research did not receive any specific grant from funding agencies in the pu
 \section*{Declaration of competing interest}
 The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
 
-% TODO (pre-submission): replace each [TODO] with the relevant CRediT roles for that author.
-% Standard CRediT roles: Conceptualization, Data curation, Formal analysis, Funding acquisition,
-% Investigation, Methodology, Project administration, Resources, Software, Supervision,
-% Validation, Visualization, Writing --- original draft, Writing --- review & editing.
 \section*{CRediT authorship contribution statement}
-\textbf{Qinmin Wang:} [TODO: CRediT roles]
-\textbf{Zixin Wang:} [TODO: CRediT roles]
-\textbf{Hongyuan Wang:} [TODO: CRediT roles]
-\textbf{Zongzhong Wang:} [TODO: CRediT roles --- corresponding author]
+\textbf{Qinmin Wang:} Conceptualization, Methodology, Software, Writing -- original draft.
+\textbf{Zixin Wang:} Software, Validation, Data curation.
+\textbf{Hongyuan Wang:} Resources, Supervision.
+\textbf{Zongzhong Wang:} Writing -- review \& editing, Supervision, Project administration (Corresponding author).
 \setlength{\bibsep}{0pt}
 \begin{thebibliography}{17}\footnotesize
 \bibitem{ref1}Q. Ling, N.A.M. Isa, Printed circuit board defect detection methods based on image processing, machine learning and deep learning: A survey, IEEE Access 11 (2023) 15921-15944. https://doi.org/10.1109/ACCESS.2023.3245093

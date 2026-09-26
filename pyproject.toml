@@ -10,7 +10,10 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
 authors = [
-    { name = "Author Name", email = "author@example.com" },
+    { name = "Qinmin Wang", email = "wangqinmin@gdust.edu.cn" },
+    { name = "Zixin Wang", email = "396514839@qq.com" },
+    { name = "Hongyuan Wang" },
+    { name = "Zongzhong Wang", email = "wangzz@gdut.edu.cn" },
 ]
 keywords = ["PCB", "solder joint", "defect inspection", "point cloud",
             "benchmark", "machine learning"]
