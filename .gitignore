@@ -26,7 +26,6 @@ Thumbs.db
 node_modules/
 did_output/
 baseline_output/
-
 # LaTeX / paper build artefacts (keep only the .tex source and the camera-ready PDF)
 paper/*.aux
 paper/*.log
@@ -45,3 +44,18 @@ paper/solderbench_softwarex_draft_v*.pdf
 !COVER_LETTER.pdf
 paper/cover_letter.pdf
 paper/cover_letter.pdf
+# 依赖包
+node_modules/
+
+# LaTeX 编译产生的中间文件
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+
+# 系统/编辑器文件
+.DS_Store
+.vscode/
+.idea/
+
