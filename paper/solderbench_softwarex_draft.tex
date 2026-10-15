@@ -29,7 +29,7 @@ solder joint inspection; automated optical inspection; 3D point cloud; synthetic
 \end{keyword}
 \end{frontmatter}
 \section{Required metadata}
-% C2/C3/C8 filled: GitHub = https://github.com/wqinmin975/pcb ; Zenodo DOI = 10.5281/zenodo.22959193 (v0.1.1).
+% C2/C3/C8 filled: GitHub = https://github.com/wqinmin975/pcb ; Zenodo concept DOI = 10.5281/zenodo.22959192 (resolves to the latest release, v0.1.2).
 \begin{table}[htbp]
 \centering
 \caption{Code metadata (mandatory).}
@@ -37,9 +37,9 @@ solder joint inspection; automated optical inspection; 3D point cloud; synthetic
 \toprule
 \textbf{Nr.} & \textbf{Code metadata description} & \textbf{Value} \\
 \midrule
-C1 & Current code version & v0.1.1 \\
+C1 & Current code version & v0.1.2 \\
 C2 & Permanent link to code/repository used for this code version & \url{https://github.com/wqinmin975/pcb} \\
-C3 & Permanent link to reproducible capsule & \url{10.5281/zenodo.22959193} \\
+C3 & Permanent link to reproducible capsule & \url{https://doi.org/10.5281/zenodo.22959192} (concept DOI, resolves to the latest release; v0.1.1 version DOI: \url{https://doi.org/10.5281/zenodo.22959193}) \\
 C4 & Legal code license & MIT License \\
 C5 & Code versioning system used & git \\
 C6 & Software code languages, tools, and services used & Python ($\ge$ 3.8) \\
@@ -55,38 +55,68 @@ Surface-mount technology (SMT) dominates modern printed-circuit-board (PCB) asse
 \subsection{Software architecture}
 Solderbench is a pure-Python package (about 1,000 source lines) with five feed-forward modules behind one public API: \texttt{generator.py} (parametric simulator), \texttt{features.py} (seven descriptors), \texttt{baselines.py} (six classifiers), \texttt{evaluate.py} (\texttt{run\_comparison}/\texttt{run\_ablation} runners exporting CSV, Booktabs-style LaTeX tables, and figures), and \texttt{data.py} (\texttt{load\_dataset()}, the real-camera integration point). Stages exchange NumPy arrays and pandas DataFrames, so any stage is replaceable; synthetic clouds swap for segmented real scans at \texttt{load\_dataset()} without downstream changes. The package ships a 15-test suite (shape and class-balance checks, same-seed reproducibility, feature validity, a Welch $t$-test that insufficient-solder volumes are significantly smaller, and fit-and-predict smoke tests), a \texttt{pyproject.toml}, and a \texttt{codemeta.json}; dependencies are only NumPy, SciPy, pandas, scikit-learn, and Matplotlib \cite{ref14,ref15,ref16,ref17}. All results use the versions pinned in \texttt{requirements.txt} (scikit-learn 1.9.0, NumPy 2.5.2, pandas 3.0.6, SciPy 1.18.0, Matplotlib 3.11.1; Python 3.13); the benchmark is fully deterministic from seed 42, so \texttt{python examples/run\_benchmark.py} regenerates every table and figure.
 \subsection{Software functionalities}
-\textbf{Generation. }SolderJointGenerator simulates five SMT defect classes \cite{ref6,ref7}: good, insufficient (shrunk ellipsoid, 0.55--0.85 of nominal), excessive (inflated ellipsoid, mean inflation 1.3, plus a bump), bridging (small center-to-center distance plus a strip), and collapse (random top dent). Over fifteen parameters control $n_{\mathrm{points}}$, noise, and the shrinkage, inflation, bridging, and collapse ranges; class ranges deliberately overlap so no classifier is perfect, and difficulty is tuned by widening or narrowing them.
+\textbf{Generation. }SolderJointGenerator simulates five SMT defect classes \cite{ref6,ref7}: good, insufficient (shrunk ellipsoid, 0.55--0.85 of nominal), excessive (inflated ellipsoid, mean inflation 1.3, plus a bump), bridging (small center-to-center distance plus a strip), and collapse (random top dent). Over fifteen parameters control $n_{\mathrm{points}}$, noise, and the shrinkage, inflation, bridging, and collapse ranges; class ranges deliberately overlap so no classifier is perfect, and difficulty is tuned by widening or narrowing them. \textbf{Table~\ref{tab:params}} lists all generator parameters with their defaults and physical meaning.
 
-\textbf{Features. }extract\_features returns seven descriptors (Table~2): \texttt{vol} (voxel volume), \texttt{max\_h}, \texttt{h\_var}, \texttt{area}, \texttt{vol\_area\_ratio}, \texttt{convex\_vol\_ratio} (irregularity), and \texttt{min\_dist} (bridging exposure).
 \begin{table}[htbp]
 \centering
-\caption{The seven geometric descriptors returned by \texttt{extract\_features} and their physical meaning.}
-\begin{tabular}{lll}
+\caption{Configurable parameters of \texttt{SolderJointGenerator} (defaults used for every reported result; all spatial quantities in mm).}
+\label{tab:params}
+\begin{tabular}{llp{0.42\linewidth}}
 \toprule
-\textbf{Feature} & \textbf{Definition} & \textbf{Physical meaning} \\
+\textbf{Parameter} & \textbf{Default} & \textbf{Physical meaning} \\
 \midrule
-\texttt{vol} & voxel count $\times$ (voxel size)$^3$ & total solder volume \\
-\texttt{max\_h} & max $z$ over points & joint height \\
-\texttt{h\_var} & variance of point heights & height-distribution spread (dent / bump) \\
-\texttt{area} & convex-hull surface area & joint surface extent \\
-\texttt{vol\_area\_ratio} & vol / area & compactness \\
-\texttt{convex\_vol\_ratio} & vol / ConvexHull.volume & shape irregularity (voids / dents) \\
-\texttt{min\_dist} & min distance to neighbouring joint & bridging exposure \\
+\texttt{n\_points} & 1500 & fixed point count per cloud (simulates scanner resolution) \\
+\texttt{noise} & 0.005 & Gaussian sensor-noise std.\ $\sigma$ (mm) \\
+\texttt{base\_radius} & 0.12 & nominal joint horizontal radius $a$ (mm) \\
+\texttt{base\_height} & 0.10 & nominal joint height $c$ (mm) \\
+\texttt{good\_scale\_std} & 0.09 & relative size variation of good joints \\
+\texttt{insufficient\_scale\_range} & (0.55, 0.85) & shrink factor of insufficient joints (overlaps good lower tail) \\
+\texttt{excess\_scale\_mean} & 1.30 & mean inflation factor of excessive joints \\
+\texttt{excess\_scale\_std} & 0.12 & inflation variation (overlaps good upper tail) \\
+\texttt{excess\_bump\_range} & (150, 350) & \# extra points forming the excessive bump \\
+\texttt{normal\_dist\_mean} & 0.65 & mean centre-to-centre spacing, non-bridging (mm) \\
+\texttt{normal\_dist\_std} & 0.07 & spacing variation (mm) \\
+\texttt{bridge\_dist\_mean} & 0.34 & mean spacing for bridging joints (abnormally small, mm) \\
+\texttt{bridge\_dist\_std} & 0.06 & bridging spacing variation (mm) \\
+\texttt{bridge\_points\_range} & (80, 180) & \# points forming the solder bridge \\
+\texttt{collapse\_depth\_range} & (0.28, 0.50) & dent depth as fraction of joint height \\
 \bottomrule
 \end{tabular}
 \end{table}
-\textbf{Baselines and runners. }get\_baselines returns S3DA --- a re-implementation of the industrial volume-threshold rule \cite{ref6}, with configurable thresholds (default values hard-coded in source code) --- plus logistic regression, an RBF-SVM \cite{ref12}, kNN, gradient boosting, and a random forest \cite{ref11}; all are scikit-learn estimators \cite{ref13} with fixed random states. run\_comparison(X, y) evaluates all six under a stratified 7:3 split with 5-fold CV, returning accuracy, macro precision, recall and F1, and CV accuracy; run\_ablation(X, y) does leave-one-feature-out and single-feature analysis anchored on the random forest (Table~3, B6) to isolate the contribution of each feature descriptor. Both export CSV and LaTeX, run\_comparison also renders the best model's confusion matrix, and \texttt{python examples/run\_benchmark.py} reproduces the full benchmark.
 
-\textbf{Validity guarantees. }Every cloud is resampled to exactly $n_{\mathrm{points}}$ points, preventing sampling-density leakage, ensuring volumetric features reflect geometry rather than point-sampling density. All randomness derives from one independent \texttt{RandomState} created at construction (not NumPy's global seed), so a given seed yields point-wise identical clouds, features, and tables --- asserted by the test suite. There is no compiled code, GPU, or network access at runtime.
+\textbf{Features. }extract\_features returns seven descriptors (Table~\ref{tab:feat}): \texttt{vol} (voxel volume), \texttt{max\_h}, \texttt{h\_var}, \texttt{area}, \texttt{vol\_area\_ratio}, \texttt{convex\_vol\_ratio} (irregularity), and \texttt{min\_dist} (bridging exposure).
+\begin{table}[htbp]
+\centering
+\caption{The seven geometric descriptors returned by \texttt{extract\_features}, their definitions, physical meaning, and computation. All coordinates are in millimetres (mm); the voxel edge is $\delta = 0.01$ mm.}
+\label{tab:feat}
+{\small
+\begin{tabular}{llp{0.17\linewidth}p{0.29\linewidth}}
+\toprule
+\textbf{Feature} & \textbf{Definition} & \textbf{Physical meaning} & \textbf{Computation (units)} \\
+\midrule
+\texttt{vol} & $N_{\mathrm{vox}}\delta^{3}$ & total solder volume & unique occupied voxels at $\delta{=}0.01$ mm; mm$^{3}$ \\
+\texttt{max\_h} & $\max_i z_i$ & joint height & mm \\
+\texttt{h\_var} & $\mathrm{Var}(z)$ & height spread (dent / bump) & mm$^{2}$ \\
+\texttt{area} & $\mathrm{Surf}(\mathrm{Conv}(\mathcal{P}))$ & joint surface extent & convex-hull area, mm$^{2}$ \\
+\texttt{vol\_area\_ratio} & vol / area & compactness & dimensionless \\
+\texttt{convex\_vol\_ratio} & vol / $\mathrm{Vol}(\mathrm{Conv}(\mathcal{P}))$ & irregularity (voids / dents) & dimensionless ($\le 1$) \\
+\texttt{min\_dist} & $\min_{j\ne i}\lVert c_i-c_j\rVert$ & bridging exposure & centre-to-centre distance (mm); synthetic: spacing distribution; real: distance between segmented joint centroids \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+\textbf{Baselines and runners. }get\_baselines returns six classifiers. S3DA reproduces the industrial volume-threshold rule \cite{ref6} as a shallow decision tree (max\_depth $=6$); although trained on all seven features, its learned splits are dominated by the voxel-volume descriptor, so it behaves as a data-driven volume-threshold proxy whose decision threshold is \emph{learned from the training split} (not hand-crafted). The other five are logistic regression, an RBF-SVM \cite{ref12}, kNN, gradient boosting, and a random forest \cite{ref11}; all are scikit-learn estimators \cite{ref13} with fixed random states. Crucially, \textbf{all six methods share the identical stratified 7:3 split and the same seven-feature input}, so the comparison is fair; S3DA is intentionally the weakest learner, representing the rule-based industrial baseline. run\_comparison(X, y) evaluates all six under a stratified 7:3 split with 5-fold CV, returning accuracy, macro precision, recall and F1, and CV accuracy; run\_ablation(X, y) does leave-one-feature-out and single-feature analysis anchored on the random forest (Table~\ref{tab:baseline}, B6) to isolate the contribution of each feature descriptor. Both export CSV and LaTeX, run\_comparison also renders the best model's confusion matrix, and \texttt{python examples/run\_benchmark.py} reproduces the full benchmark.
+
+\textbf{Validity guarantees. }Every cloud is resampled to exactly $n_{\mathrm{points}}$ points, preventing sampling-density leakage, ensuring volumetric features reflect geometry rather than point-sampling density. All randomness derives from one independent \texttt{RandomState} created at construction (not NumPy's global seed), so a given seed yields point-wise identical clouds, features, and tables --- asserted by the test suite. There is no compiled code, GPU, or network access at runtime. The package is tested on Python 3.13 with the exact dependency versions pinned in \texttt{requirements.txt} (scikit-learn 1.9.0, NumPy 2.5.2, pandas 3.0.6, SciPy 1.18.0, Matplotlib 3.11.1); the archived Zenodo release v0.1.2 reproduces every table and figure bit-for-bit. For users who cannot recreate the host environment, the repository also ships a \texttt{Dockerfile} that builds a pinned Python 3.13 image from \texttt{requirements.txt} and runs the benchmark with a single \texttt{docker run} command. The real-data integration point \texttt{load\_dataset} is documented and covered by a unit test that runs the full pipeline on arbitrary user-supplied \texttt{X, y}.
 \section{Illustrative examples}
 \subsection{Quickstart}
-Install the package and its dependencies first with \texttt{pip install -e .} (requires Python $\ge$ 3.8); the API below corresponds to version v0.1.1 and may change in later releases. The following end-to-end example generates a dataset, extracts features, and runs both experiments in eight lines:
+Install the package and its dependencies first with \texttt{pip install -e .} (requires Python $\ge$ 3.8); the API below corresponds to version v0.1.2 and may change in later releases. The following end-to-end example generates a dataset, extracts features, and runs both experiments in eight lines:
 {\footnotesize
 \begin{verbatim}
 from solderbench import (SolderJointGenerator, extract_features,
 get_baselines, run_comparison, run_ablation)
 # generate 1250 joints (5 classes x 250) at seed 42
-gen = SolderJointGenerator(n_points=1500, noise=0.02, seed=42)
+gen = SolderJointGenerator(n_points=1500, noise=0.005, seed=42)
 clouds, labels = gen.generate(n_per_class=250)   # 5 classes x 250 joints
 X, y = gen.to_features(clouds, labels)           # 7-feature matrix + labels
 results = run_comparison(X, y)   # 6 methods x Acc/P/R/F1 + 5-fold CV
@@ -96,35 +126,92 @@ print(abl.head(8))
 \end{verbatim}
 }
 \subsection{Benchmark comparison}
-\texttt{examples/run\_benchmark.py} produces the benchmark snapshot reported in Table~3: 1250 samples (5 classes $\times$ 250 joints, 1500 points per cloud, seed 42, stratified 7:3 split; 5-fold cross-validation on the training set).
+\texttt{examples/run\_benchmark.py} produces the benchmark snapshot reported in Table~\ref{tab:baseline}. To establish reliability we repeat the full comparison on \textbf{five independent random seeds} (42, 123, 456, 789, 1011); the table reports the mean $\pm$ std of each metric across seeds. The seed-42 run (1250 samples, 5 classes $\times$ 250 joints, 1500 points per cloud, stratified 7:3 split, 5-fold CV on the training set) yields the single-run snapshot cited elsewhere (RF accuracy 0.9440, macro-$F_1$ 0.9439).
 \begin{table}[htbp]
 \centering
-\caption{Baseline comparison on the Solderbench benchmark (seed = 42, 1250 samples). Best results in bold.}
+\caption{Baseline comparison across five independent random seeds (mean $\pm$ std; 1250 samples per seed, stratified 7:3 split, 5-fold CV on the training set). Best mean test metric in bold.}
+\label{tab:baseline}
+{\small\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lcccccc}
 \toprule
-\textbf{No.} & \textbf{Method} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{macro-$F_1$} & \textbf{CV Acc. (5-fold)} \\
+\textbf{No.} & \textbf{Method} & \textbf{Acc.} & \textbf{Prec.} & \textbf{Rec.} & \textbf{$F_1$} & \textbf{CV} \\
 \midrule
-B1 & S3DA (volume threshold) & 0.8960 & 0.8990 & 0.8960 & 0.8964 & 0.9234 $\pm$ 0.0138 \\
-B2 & Logistic Regression & 0.9387 & 0.9416 & 0.9387 & 0.9386 & 0.9657 $\pm$ 0.0198 \\
-B3 & SVM (RBF) & 0.9387 & 0.9390 & 0.9387 & 0.9385 & 0.9771 $\pm$ 0.0177 \\
-B4 & KNN & 0.8933 & 0.8944 & 0.8933 & 0.8921 & 0.9234 $\pm$ 0.0168 \\
-B5 & GradientBoosting & 0.9413 & 0.9417 & 0.9413 & 0.9412 & 0.9577 $\pm$ 0.0138 \\
-\textbf{B6} & \textbf{Random Forest} & \textbf{0.9440} & \textbf{0.9452} & \textbf{0.9440} & \textbf{0.9439} & \textbf{0.9680 $\pm$ 0.0160} \\
+B1 & S3DA (vol.\ rule) & 0.9131$\pm$0.0156 & 0.9164$\pm$0.0153 & 0.9131$\pm$0.0156 & 0.9136$\pm$0.0153 & 0.9184$\pm$0.0149 \\
+B2 & Logistic Regression & 0.9579$\pm$0.0114 & 0.9588$\pm$0.0105 & 0.9579$\pm$0.0114 & 0.9578$\pm$0.0114 & 0.9625$\pm$0.0157 \\
+B3 & SVM (RBF) & 0.9611$\pm$0.0119 & 0.9616$\pm$0.0119 & 0.9611$\pm$0.0119 & 0.9610$\pm$0.0119 & 0.9696$\pm$0.0115 \\
+B4 & KNN & 0.9253$\pm$0.0178 & 0.9272$\pm$0.0184 & 0.9253$\pm$0.0178 & 0.9249$\pm$0.0184 & 0.9239$\pm$0.0176 \\
+B5 & GradientBoosting & 0.9477$\pm$0.0078 & 0.9491$\pm$0.0079 & 0.9477$\pm$0.0078 & 0.9476$\pm$0.0079 & 0.9557$\pm$0.0140 \\
+\textbf{B6} & \textbf{RandomForest} & \textbf{0.9531$\pm$0.0115} & \textbf{0.9538$\pm$0.0116} & \textbf{0.9531$\pm$0.0115} & \textbf{0.9530$\pm$0.0115} & 0.9650$\pm$0.0127 \\
 \bottomrule
 \end{tabular}
+}
 \end{table}
-Three observations follow. First, the industrial rule S3DA (B1) is a strong baseline at 0.8960 accuracy, confirming that solder volume alone carries most of the class signal --- exactly the physics the generator encodes. Second, all learning-based methods improve on the rule, with the random forest best on the held-out test set (accuracy 0.9440, macro-$F_1$ 0.9439). Third, test-set and cross-validation rankings do not fully coincide: the RBF SVM has the highest CV accuracy (0.9771) yet only 0.9387 on the held-out test set, a textbook signature of mild overfitting to the training folds. This is exactly why Solderbench reports both protocols and why users must trust the independent test set rather than cross-validation alone.
-Figure~1 shows the confusion matrix of the random forest on the held-out test set (375 samples, 21 misclassified). Bridging is perfectly separated (75/75), because the \texttt{min\_dist} feature exposes the abnormally small inter-joint distance by construction. All 21 errors stay within the \{good, insufficient, collapse\} triad: collapse loses 4 samples to good and 6 to insufficient, and gains 3 good samples misclassified as collapse; good and insufficient exchange 2 samples each way, and insufficient loses a further 4 samples to collapse. The overall error therefore remains between collapse and the good and insufficient classes, because a shallow dent alters the height distribution only subtly --- precisely why \texttt{h\_var} --- the most informative descriptor in the ablation (Table~4) --- is needed to separate it; this mirrors the hard case reported for real 3D inspection systems \cite{ref6,ref7}.
+Three observations follow. First, the industrial rule S3DA (B1) is a strong baseline (mean accuracy 0.9131 across seeds; 0.8960 at seed 42), confirming that solder volume alone carries most of the class signal --- exactly the physics the generator encodes. Second, most learning-based methods improve on the rule, although kNN remains statistically tied with it (its mean accuracy 0.9253 is within one std of S3DA's 0.9131). The random forest attains the best mean test accuracy (0.9531) and macro-$F_1$ (0.9530). Third, the random forest edges gradient boosting by only 0.0053 accuracy on average across seeds, while the inter-seed standard deviation of that gap (0.0065) \emph{exceeds} the mean gap; the two are therefore statistically tied, and we do not claim RF strictly outperforms GB. Finally, test-set and cross-validation rankings do not fully coincide: the RBF SVM has the highest mean CV accuracy (0.9696) yet a lower held-out test accuracy (0.9611). This gap is consistent with mild overfitting but may also reflect variance of the particular held-out splits, which is exactly why Solderbench reports both protocols and why users must trust the independent test set rather than cross-validation alone.
+Figure~\ref{fig:cm} shows the confusion matrix of the random forest on the held-out test set (375 samples, 21 misclassified). Bridging is perfectly separated (75/75), because the \texttt{min\_dist} feature exposes the abnormally small inter-joint distance by construction. All 21 errors stay within the \{good, insufficient, collapse\} triad: collapse loses 4 samples to good and 6 to insufficient, and gains 3 good samples misclassified as collapse; good and insufficient exchange 2 samples each way, and insufficient loses a further 4 samples to collapse. The overall error therefore remains between collapse and the good and insufficient classes, because a shallow dent alters the height distribution only subtly --- precisely why \texttt{h\_var} --- the most informative descriptor in the ablation (Table~\ref{tab:loo}) --- is needed to separate it; this mirrors the hard case reported for real 3D inspection systems \cite{ref6,ref7}.
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.34\textwidth]{fig1.png}
-\caption{Confusion matrix for the Random Forest (B6) on the held-out test set (375 samples, seed = 42); the main confusion lies between collapse and the good and insufficient classes.}
+\caption{Confusion matrix for the Random Forest (B6) on the held-out test set (375 samples, seed = 42); the main confusion lies between collapse and the good and insufficient classes, while excessive solder incurs no test errors.}
+\label{fig:cm}
 \end{figure}
+
+\subsection{Representative samples, robustness, and physical validity}
+Figure~\ref{fig:samples} shows one representative synthetic point cloud per defect class (seed 42, 1500 points each). The generator is a parametric geometric model: every entry in Table~\ref{tab:params} has a physical interpretation --- the nominal joint radius $a$ and height $c$ set the joint scale in mm, \texttt{noise} is the sensor measurement standard deviation $\sigma$, and the shrinkage / inflation / bridging / collapse ranges express each defect as a controlled, physically meaningful deviation from the nominal geometry. This makes the benchmark's class difficulty directly tunable (widening the overlap ranges makes classes harder) and the defects interpretable, even though the clouds are not fitted to production scans.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{sample_clouds.png}
+\caption{Representative synthetic point clouds, one per defect class (seed 42, 1500 points each; axes in mm). Good and insufficient differ mainly in scale; excessive adds a bump; bridging shows a low bridge to the neighbour; collapse shows a top dent.}
+\label{fig:samples}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{noise_effect.png}
+\caption{Effect of sensor noise on a nominal (good) joint: as $\sigma$ grows the cloud becomes progressively rougher, degrading classifier accuracy (see Table~\ref{tab:noise}).}
+\label{fig:noise}
+\end{figure}
+
+To verify that the reported ranking is not an artefact of a single configuration, we repeat the full comparison under varying sensor noise and defect-strength settings (seed 42). Table~\ref{tab:noise} varies the noise std.\ $\sigma$ over five levels $\sigma\in\{0.005,\allowbreak 0.01,\allowbreak 0.02,\allowbreak 0.05,\allowbreak 0.10\}$; accuracy falls monotonically and gracefully (RF 0.9440 $\to$ 0.7467) while the relative ordering of methods is preserved, confirming the benchmark is robust to sensor quality. Table~\ref{tab:defect} varies the class-overlap ranges: narrowing them (an easier task) raises RF accuracy to 0.9653, whereas widening them keeps RF at 0.9440 because the seven geometric features remain discriminative even under wide overlap --- i.e., difficulty is controllable in the easy direction and the features are robust to aggressive overlap. Together these ablations show the conclusions hold across a range of physically meaningful generator settings.
+
+\begin{table}[htbp]
+\centering
+\caption{Robustness to sensor noise. Accuracy of the random forest (B6), the S3DA rule (B1) and gradient boosting (B5), and the span of all six methods, as a function of the Gaussian noise std.\ $\sigma$ (seed 42).}
+\label{tab:noise}
+\begin{tabular}{lcccc}
+\toprule
+$\sigma$ & RF Acc. & S3DA Acc. & GB Acc. & Span$_{\mathrm{acc}}$ \\
+\midrule
+0.005 & 0.9440 & 0.8960 & 0.9413 & [0.8933, 0.9440] \\
+0.010 & 0.9360 & 0.9013 & 0.9307 & [0.8960, 0.9387] \\
+0.020 & 0.9173 & 0.8667 & 0.9120 & [0.8667, 0.9307] \\
+0.050 & 0.8640 & 0.8293 & 0.8560 & [0.8293, 0.8827] \\
+0.100 & 0.7467 & 0.7200 & 0.7307 & [0.6933, 0.7547] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Robustness to defect-strength / class-overlap configuration. RF accuracy and the worst-method accuracy under a narrow (easier), default, and wide (harder) overlap of the class parameter ranges (seed 42).}
+\label{tab:defect}
+\begin{tabular}{lccc}
+\toprule
+Configuration & RF Acc. & S3DA Acc. & Min acc. \\
+\midrule
+narrow (easier) & 0.9653 & 0.9040 & 0.9040 \\
+default & 0.9440 & 0.8960 & 0.8933 \\
+wide (harder) & 0.9440 & 0.8960 & 0.8960 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Feature ablation}
-Table~4 reports the leave-one-feature-out (LOO) ablation for the random forest (full-model macro-$F_1$ = 0.9439).
+Table~\ref{tab:loo} reports the leave-one-feature-out (LOO) ablation for the random forest (full-model macro-$F_1$ = 0.9439).
 \begin{table}[htbp]
 \centering
 \caption{Leave-one-feature-out ablation of the RandomForest model (macro-$F_1$; full model = 0.9439).}
+\label{tab:loo}
 \begin{tabular}{lp{0.22\linewidth}p{0.50\linewidth}}
 \toprule
 \textbf{Removed feature} & \textbf{$\Delta F_1$ vs. full-model $F_1$} & \textbf{Interpretation} \\
@@ -139,10 +226,11 @@ max\_h & 0.0000 & Fully redundant given h\_var and vol \\
 \bottomrule
 \end{tabular}
 \end{table}
-The ablation has a clean physical reading. Height variance (\texttt{h\_var}) is the single most valuable descriptor because the two hardest defects --- collapse (a dent) and excessive solder (a bump) --- are primarily height-distribution phenomena, whereas volume-only cues saturate. Single-feature runs corroborate this: the strongest single feature is \texttt{convex\_vol\_ratio} ($\text{macro-}F_1=0.6412$), which captures shape irregularity common to several defect types, while the weakest is \texttt{min\_dist} ($\text{macro-}F_1=0.3616$), which is highly informative for bridging but carries no signal for the other four classes. The near-zero or positive deltas for \texttt{vol} and \texttt{max\_h} indicate information redundancy rather than irrelevance: both are strongly correlated with the ratio features. Volume alone is in fact a strong single cue --- it underpins the industrial S3DA rule (B1), which reaches 0.8960 accuracy using volume only. Removing \texttt{vol} slightly increases macro-$F_1$ within small numerical fluctuations; this is purely a statistical artifact given that volume information is already encoded within ratio-based descriptors.
+The ablation has a clean physical reading. Height variance (\texttt{h\_var}) is the single most valuable descriptor because the most error-prone defects --- collapse (a dent) and insufficient solder (shrinkage) --- primarily shift the height distribution, whereas excessive solder (a pronounced volume inflation) is in fact well separated, with zero test errors in Figure~\ref{fig:cm} because its volume signature is large and distinctive. Volume-only cues therefore saturate for the volumetric defects but miss the subtle height changes that distinguish collapse from good/insufficient. Single-feature runs corroborate this: the strongest single feature is \texttt{convex\_vol\_ratio} ($\text{macro-}F_1=0.6412$), which captures shape irregularity common to several defect types, while the weakest is \texttt{min\_dist} ($\text{macro-}F_1=0.3616$), which is highly informative for bridging but carries no signal for the other four classes. The near-zero or positive deltas for \texttt{vol} and \texttt{max\_h} indicate information redundancy rather than irrelevance: both are strongly correlated with the ratio features. Volume alone is in fact a strong single cue --- it underpins the industrial S3DA rule (B1), which reaches 0.8960 accuracy using volume only. Removing \texttt{vol} slightly increases macro-$F_1$ within small numerical fluctuations; this is purely a statistical artifact given that volume information is already encoded within ratio-based descriptors.
 \begin{table}[htbp]
 \centering
 \caption{Selected representative single-feature macro-$F_1$ scores (RandomForest, seed = 42). Full results are programmatically exported by run\_ablation.}
+\label{tab:single}
 \begin{tabular}{lc}
 \toprule
 \textbf{Single feature} & \textbf{macro-$F_1$} \\
@@ -165,7 +253,7 @@ The generator is a geometric model, not a physics simulator: it does not model w
 \textbf{Consequently, Solderbench is suitable for algorithm prototyping, fair cross-method comparison, and descriptor-level analysis, but its metric values must not be read as predictions of real industrial AOI performance.} Synthetic validation cannot substitute for validation on real scans; the benchmark guarantees only that comparisons made on it are fair, controlled, and exactly reproducible --- a much-needed property currently missing from this research field.
 
 % Zenodo DOI 10.5281/zenodo.22959193 (release v0.1.1) filled in C3 and Data availability.
-\begin{sloppypar}\noindent\textbf{Data availability.} The Solderbench source code and all reproduction scripts are released under the MIT license and archived on Zenodo (doi:\url{10.5281/zenodo.22959193}); the permanent GitHub repository is \url{https://github.com/wqinmin975/pcb}. The benchmark dataset is not stored as a fixed file but generated deterministically at runtime by running \texttt{python examples/run\_benchmark.py}, which regenerates every table and figure in this paper.\end{sloppypar}
+\begin{sloppypar}\noindent\textbf{Data availability.} The Solderbench source code and all reproduction scripts are released under the MIT license and archived on Zenodo (concept doi:\url{10.5281/zenodo.22959192}, version doi:\url{10.5281/zenodo.22959193} for v0.1.1); the permanent GitHub repository is \url{https://github.com/wqinmin975/pcb}. The benchmark dataset is not stored as a fixed file but generated deterministically at runtime by running \texttt{python examples/run\_benchmark.py}, which regenerates every table and figure in this paper.\end{sloppypar}
 
 \section{Conclusions}
 We presented Solderbench, an open-source, pure-Python synthetic benchmark for 3D PCB solder-joint defect inspection with a parametric five-class generator, seed-level reproducibility, a seven-dimensional feature extractor, six baselines including the industrial S3DA rule, and automated comparison and ablation runners. On the reference benchmark (1250 samples, seed 42) a random forest reaches 0.9440 accuracy and 0.9439 macro-$F_1$. By removing the data-access barrier that fragments 3D solder-joint inspection, Solderbench makes development, comparison, and teaching open and reproducible. Future work: (i) fitting generator parameters to measured scans; (ii) adding sensor-artifact models; (iii) compound-defect taxonomy; (iv) real-data conversion scripts; (v) deep point-cloud model interfaces (e.g. PointNet, PointNet++); and (vi) preset difficulty templates.

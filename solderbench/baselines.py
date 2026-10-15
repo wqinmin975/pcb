@@ -2,10 +2,11 @@
 
 Six methods are provided:
 
-* **B1 -- S3DA (volume threshold)**: a single shallow decision tree,
-  reproducing the rule-based volume-threshold method of the original S3DA
-  pipeline (the tree learns the decision thresholds from data instead of
-  using hand-crafted volume limits).
+* **B1 -- S3DA (volume threshold)**: a shallow decision tree (max_depth=6)
+  that reproduces the rule-based volume-threshold method of the original S3DA
+  pipeline. Trained on all seven features, its splits are dominated by the
+  voxel-volume descriptor, so the decision threshold is learned from the
+  training data (not hand-crafted) and behaves as a volume-threshold proxy.
 * **B2 -- Logistic Regression** (standardised).
 * **B3 -- SVM (RBF)** (standardised).
 * **B4 -- KNN** (standardised, k=7).
