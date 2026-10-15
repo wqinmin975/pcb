@@ -1,0 +1,203 @@
+\documentclass[3p]{elsarticle}
+\usepackage{times}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{xurl}
+\def\UrlBreaks{\do\/\do\.\do\-}
+\usepackage[pdfencoding=auto]{hyperref}
+\hypersetup{colorlinks=true,urlcolor=blue}
+\begin{document}
+\begin{frontmatter}
+\title{Solderbench: An open-source synthetic benchmark for PCB solder-joint defect inspection algorithm development}
+\author[1]{Qinmin Wang\fnref{fn1}}
+\author[2]{Zixin Wang\fnref{fn2}}
+\author[1]{Hongyuan Wang}
+\author[3]{Zongzhong Wang\corref{cor1}}
+\address[1]{School of Computer Science and Artificial Intelligence, Guangdong University of Science and Technology, Dongguan, China}
+\address[2]{School of Electronic and Communication Engineering, Tianjin Normal University, Tianjin, China}
+\address[3]{School of Electromechanical Engineering, Guangdong University of Technology, Guangzhou, China}
+\cortext[cor1]{Corresponding author at School of Electromechanical Engineering, Guangdong University of Technology, Guangzhou, China. E-mail: wangzz@gdut.edu.cn}
+\fntext[fn1]{E-mail: wangqinmin@gdust.edu.cn}
+\fntext[fn2]{E-mail: 396514839@qq.com}
+\begin{abstract}
+Automated optical inspection (AOI) of solder joints is a critical quality-control step in printed circuit board (PCB) assembly, and three-dimensional (3D) point-cloud inspection is increasingly adopted because solder quality is essentially a volumetric property. However, publicly available 3D solder-joint datasets are essentially nonexistent: industrial scan data are proprietary, so new inspection algorithms are difficult to compare fairly. We present Solderbench, an open-source, pure-Python synthetic benchmark for developing and evaluating 3D solder-joint defect inspection algorithms. Solderbench provides (i) a parametric point-cloud generator that simulates five joint classes (good, insufficient, excessive, bridging, and collapse) with more than fifteen controllable parameters and \mbox{seed-level}, point-wise reproducibility; (ii) a seven-dimensional geometric feature extractor; (iii) six baseline classifiers, including a re-implementation of the industrial volume-threshold rule S3DA; and (iv) automated comparison and ablation runners that export CSV, LaTeX, and figure artifacts. On a 1250-sample benchmark (seed 42), a random forest reaches 0.9440 accuracy and 0.9439 macro-$F_1$, and feature ablation identifies height variance as the most informative descriptor. Synthetic results serve as a controlled, reproducible proxy for algorithm development, yet final validation must be performed using real-world production scan data.
+\end{abstract}
+\begin{keyword}
+solder joint inspection; automated optical inspection; 3D point cloud; synthetic benchmark; defect classification; reproducible evaluation; PCB; synthetic dataset
+\end{keyword}
+\end{frontmatter}
+\section{Required metadata}
+% C2/C3/C8 filled: GitHub = https://github.com/wqinmin975/pcb ; Zenodo DOI = 10.5281/zenodo.22959193 (v0.1.1).
+\begin{table}[htbp]
+\centering
+\caption{Code metadata (mandatory).}
+\begin{tabular}{lp{0.40\linewidth}p{0.46\linewidth}}
+\toprule
+\textbf{Nr.} & \textbf{Code metadata description} & \textbf{Value} \\
+\midrule
+C1 & Current code version & v0.1.1 \\
+C2 & Permanent link to code/repository used for this code version & \url{https://github.com/wqinmin975/pcb} \\
+C3 & Permanent link to reproducible capsule & \url{10.5281/zenodo.22959193} \\
+C4 & Legal code license & MIT License \\
+C5 & Code versioning system used & git \\
+C6 & Software code languages, tools, and services used & Python ($\ge$ 3.8) \\
+C7 & Compilation requirements, operating environments and dependencies & NumPy, SciPy, pandas, scikit-learn, and Matplotlib; OS-independent (no compilation, no GPU required) \\
+C8 & Link to developer documentation/manual & \url{https://github.com/wqinmin975/pcb\#readme} \\
+C9 & Support email for questions & wangzz@gdut.edu.cn \\
+\bottomrule
+\end{tabular}
+\end{table}
+\section{Motivation and significance}
+Surface-mount technology (SMT) dominates modern printed-circuit-board (PCB) assembly, and solder-joint quality largely determines product reliability. AOI is the standard quality-control step on SMT lines \cite{ref1,ref2,ref3}; classical 2D AOI and deep-learning 2D detectors \cite{ref4} on public datasets such as DeepPCB \cite{ref5} are mature, yet inspection is increasingly moving to 3D because solder quality is fundamentally volumetric \cite{ref6,ref7}. General 3D deep learning (PointNet/PointNet++ \cite{ref8,ref9}, Open3D \cite{ref10}) has advanced, but 3D solder-joint research remains hampered by the absence of public data: existing public PCB datasets are almost entirely 2D \cite{ref5}, and the few 3D studies rely on private, non-public in-house point-cloud datasets \cite{ref6,ref7}, so algorithms cannot be compared fairly or reproduced. Solderbench closes this gap synthetically, simulating solder-joint point clouds from a parametric geometric model whose parameters (nominal joint size, noise, defect strength, bridging distance, collapse depth) are physically interpretable and user-controllable; synthetic generation yields costless labeled data of arbitrary size, deliberate control of class difficulty and sensor noise, and seed-level reproducibility.
+\section{Software description}
+\subsection{Software architecture}
+Solderbench is a pure-Python package (about 1,000 source lines) with five feed-forward modules behind one public API: \texttt{generator.py} (parametric simulator), \texttt{features.py} (seven descriptors), \texttt{baselines.py} (six classifiers), \texttt{evaluate.py} (\texttt{run\_comparison}/\texttt{run\_ablation} runners exporting CSV, Booktabs-style LaTeX tables, and figures), and \texttt{data.py} (\texttt{load\_dataset()}, the real-camera integration point). Stages exchange NumPy arrays and pandas DataFrames, so any stage is replaceable; synthetic clouds swap for segmented real scans at \texttt{load\_dataset()} without downstream changes. The package ships a 15-test suite (shape and class-balance checks, same-seed reproducibility, feature validity, a Welch $t$-test that insufficient-solder volumes are significantly smaller, and fit-and-predict smoke tests), a \texttt{pyproject.toml}, and a \texttt{codemeta.json}; dependencies are only NumPy, SciPy, pandas, scikit-learn, and Matplotlib \cite{ref14,ref15,ref16,ref17}. All results use the versions pinned in \texttt{requirements.txt} (scikit-learn 1.9.0, NumPy 2.5.2, pandas 3.0.6, SciPy 1.18.0, Matplotlib 3.11.1; Python 3.13); the benchmark is fully deterministic from seed 42, so \texttt{python examples/run\_benchmark.py} regenerates every table and figure.
+\subsection{Software functionalities}
+\textbf{Generation. }SolderJointGenerator simulates five SMT defect classes \cite{ref6,ref7}: good, insufficient (shrunk ellipsoid, 0.55--0.85 of nominal), excessive (inflated ellipsoid, mean inflation 1.3, plus a bump), bridging (small center-to-center distance plus a strip), and collapse (random top dent). Over fifteen parameters control $n_{\mathrm{points}}$, noise, and the shrinkage, inflation, bridging, and collapse ranges; class ranges deliberately overlap so no classifier is perfect, and difficulty is tuned by widening or narrowing them.
+
+\textbf{Features. }extract\_features returns seven descriptors (Table~2): \texttt{vol} (voxel volume), \texttt{max\_h}, \texttt{h\_var}, \texttt{area}, \texttt{vol\_area\_ratio}, \texttt{convex\_vol\_ratio} (irregularity), and \texttt{min\_dist} (bridging exposure).
+\begin{table}[htbp]
+\centering
+\caption{The seven geometric descriptors returned by \texttt{extract\_features} and their physical meaning.}
+\begin{tabular}{lll}
+\toprule
+\textbf{Feature} & \textbf{Definition} & \textbf{Physical meaning} \\
+\midrule
+\texttt{vol} & voxel count $\times$ (voxel size)$^3$ & total solder volume \\
+\texttt{max\_h} & max $z$ over points & joint height \\
+\texttt{h\_var} & variance of point heights & height-distribution spread (dent / bump) \\
+\texttt{area} & convex-hull surface area & joint surface extent \\
+\texttt{vol\_area\_ratio} & vol / area & compactness \\
+\texttt{convex\_vol\_ratio} & vol / ConvexHull.volume & shape irregularity (voids / dents) \\
+\texttt{min\_dist} & min distance to neighbouring joint & bridging exposure \\
+\bottomrule
+\end{tabular}
+\end{table}
+\textbf{Baselines and runners. }get\_baselines returns S3DA --- a re-implementation of the industrial volume-threshold rule \cite{ref6}, with configurable thresholds (default values hard-coded in source code) --- plus logistic regression, an RBF-SVM \cite{ref12}, kNN, gradient boosting, and a random forest \cite{ref11}; all are scikit-learn estimators \cite{ref13} with fixed random states. run\_comparison(X, y) evaluates all six under a stratified 7:3 split with 5-fold CV, returning accuracy, macro precision, recall and F1, and CV accuracy; run\_ablation(X, y) does leave-one-feature-out and single-feature analysis anchored on the random forest (Table~3, B6) to isolate the contribution of each feature descriptor. Both export CSV and LaTeX, run\_comparison also renders the best model's confusion matrix, and \texttt{python examples/run\_benchmark.py} reproduces the full benchmark.
+
+\textbf{Validity guarantees. }Every cloud is resampled to exactly $n_{\mathrm{points}}$ points, preventing sampling-density leakage, ensuring volumetric features reflect geometry rather than point-sampling density. All randomness derives from one independent \texttt{RandomState} created at construction (not NumPy's global seed), so a given seed yields point-wise identical clouds, features, and tables --- asserted by the test suite. There is no compiled code, GPU, or network access at runtime.
+\section{Illustrative examples}
+\subsection{Quickstart}
+Install the package and its dependencies first with \texttt{pip install -e .} (requires Python $\ge$ 3.8); the API below corresponds to version v0.1.1 and may change in later releases. The following end-to-end example generates a dataset, extracts features, and runs both experiments in eight lines:
+{\footnotesize
+\begin{verbatim}
+from solderbench import (SolderJointGenerator, extract_features,
+get_baselines, run_comparison, run_ablation)
+# generate 1250 joints (5 classes x 250) at seed 42
+gen = SolderJointGenerator(n_points=1500, noise=0.02, seed=42)
+clouds, labels = gen.generate(n_per_class=250)   # 5 classes x 250 joints
+X, y = gen.to_features(clouds, labels)           # 7-feature matrix + labels
+results = run_comparison(X, y)   # 6 methods x Acc/P/R/F1 + 5-fold CV
+print(results[["no", "name", "Accuracy", "F1"]])
+abl = run_ablation(X, y)         # leave-one-out + single-feature dF1
+print(abl.head(8))
+\end{verbatim}
+}
+\subsection{Benchmark comparison}
+\texttt{examples/run\_benchmark.py} produces the benchmark snapshot reported in Table~3: 1250 samples (5 classes $\times$ 250 joints, 1500 points per cloud, seed 42, stratified 7:3 split; 5-fold cross-validation on the training set).
+\begin{table}[htbp]
+\centering
+\caption{Baseline comparison on the Solderbench benchmark (seed = 42, 1250 samples). Best results in bold.}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{No.} & \textbf{Method} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{macro-$F_1$} & \textbf{CV Acc. (5-fold)} \\
+\midrule
+B1 & S3DA (volume threshold) & 0.8960 & 0.8990 & 0.8960 & 0.8964 & 0.9234 $\pm$ 0.0138 \\
+B2 & Logistic Regression & 0.9387 & 0.9416 & 0.9387 & 0.9386 & 0.9657 $\pm$ 0.0198 \\
+B3 & SVM (RBF) & 0.9387 & 0.9390 & 0.9387 & 0.9385 & 0.9771 $\pm$ 0.0177 \\
+B4 & KNN & 0.8933 & 0.8944 & 0.8933 & 0.8921 & 0.9234 $\pm$ 0.0168 \\
+B5 & GradientBoosting & 0.9413 & 0.9417 & 0.9413 & 0.9412 & 0.9577 $\pm$ 0.0138 \\
+\textbf{B6} & \textbf{Random Forest} & \textbf{0.9440} & \textbf{0.9452} & \textbf{0.9440} & \textbf{0.9439} & \textbf{0.9680 $\pm$ 0.0160} \\
+\bottomrule
+\end{tabular}
+\end{table}
+Three observations follow. First, the industrial rule S3DA (B1) is a strong baseline at 0.8960 accuracy, confirming that solder volume alone carries most of the class signal --- exactly the physics the generator encodes. Second, all learning-based methods improve on the rule, with the random forest best on the held-out test set (accuracy 0.9440, macro-$F_1$ 0.9439). Third, test-set and cross-validation rankings do not fully coincide: the RBF SVM has the highest CV accuracy (0.9771) yet only 0.9387 on the held-out test set, a textbook signature of mild overfitting to the training folds. This is exactly why Solderbench reports both protocols and why users must trust the independent test set rather than cross-validation alone.
+Figure~1 shows the confusion matrix of the random forest on the held-out test set (375 samples, 21 misclassified). Bridging is perfectly separated (75/75), because the \texttt{min\_dist} feature exposes the abnormally small inter-joint distance by construction. All 21 errors stay within the \{good, insufficient, collapse\} triad: collapse loses 4 samples to good and 6 to insufficient, and gains 3 good samples misclassified as collapse; good and insufficient exchange 2 samples each way, and insufficient loses a further 4 samples to collapse. The overall error therefore remains between collapse and the good and insufficient classes, because a shallow dent alters the height distribution only subtly --- precisely why \texttt{h\_var} --- the most informative descriptor in the ablation (Table~4) --- is needed to separate it; this mirrors the hard case reported for real 3D inspection systems \cite{ref6,ref7}.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.34\textwidth]{fig1.png}
+\caption{Confusion matrix for the Random Forest (B6) on the held-out test set (375 samples, seed = 42); the main confusion lies between collapse and the good and insufficient classes.}
+\end{figure}
+\subsection{Feature ablation}
+Table~4 reports the leave-one-feature-out (LOO) ablation for the random forest (full-model macro-$F_1$ = 0.9439).
+\begin{table}[htbp]
+\centering
+\caption{Leave-one-feature-out ablation of the RandomForest model (macro-$F_1$; full model = 0.9439).}
+\begin{tabular}{lp{0.22\linewidth}p{0.50\linewidth}}
+\toprule
+\textbf{Removed feature} & \textbf{$\Delta F_1$ vs. full-model $F_1$} & \textbf{Interpretation} \\
+\midrule
+h\_var & -0.0459 & Most informative: collapse dents and excessive bumps reshape the height distribution \\
+vol\_area\_ratio & -0.0105 & Compactness cue separating volumetric defects from nominal joints \\
+min\_dist & -0.0054 & Small overall cost because bridging is nearly separable already \\
+area & -0.0052 & Correlated with vol; adds modest independent signal \\
+convex\_vol\_ratio & -0.0025 & Irregularity cue; partially redundant with h\_var \\
+vol & +0.0026 & Slightly redundant once ratios are present \\
+max\_h & 0.0000 & Fully redundant given h\_var and vol \\
+\bottomrule
+\end{tabular}
+\end{table}
+The ablation has a clean physical reading. Height variance (\texttt{h\_var}) is the single most valuable descriptor because the two hardest defects --- collapse (a dent) and excessive solder (a bump) --- are primarily height-distribution phenomena, whereas volume-only cues saturate. Single-feature runs corroborate this: the strongest single feature is \texttt{convex\_vol\_ratio} ($\text{macro-}F_1=0.6412$), which captures shape irregularity common to several defect types, while the weakest is \texttt{min\_dist} ($\text{macro-}F_1=0.3616$), which is highly informative for bridging but carries no signal for the other four classes. The near-zero or positive deltas for \texttt{vol} and \texttt{max\_h} indicate information redundancy rather than irrelevance: both are strongly correlated with the ratio features. Volume alone is in fact a strong single cue --- it underpins the industrial S3DA rule (B1), which reaches 0.8960 accuracy using volume only. Removing \texttt{vol} slightly increases macro-$F_1$ within small numerical fluctuations; this is purely a statistical artifact given that volume information is already encoded within ratio-based descriptors.
+\begin{table}[htbp]
+\centering
+\caption{Selected representative single-feature macro-$F_1$ scores (RandomForest, seed = 42). Full results are programmatically exported by run\_ablation.}
+\begin{tabular}{lc}
+\toprule
+\textbf{Single feature} & \textbf{macro-$F_1$} \\
+\midrule
+\texttt{vol}               & 0.5494 \\
+\texttt{max\_h}            & 0.5473 \\
+\texttt{h\_var}            & 0.5808 \\
+\texttt{area}              & 0.6409 \\
+\texttt{vol\_area\_ratio}   & 0.5794 \\
+\texttt{convex\_vol\_ratio} & 0.6412 \\
+\texttt{min\_dist}         & 0.3616 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\section{Impact}
+Solderbench contributes to three communities. For inspection-algorithm research, it is the first public, reproducible 3D benchmark for solder-joint defect classification, replacing per-paper private datasets with a common task, protocol, and versioned reference numbers; new methods are ranked against six baselines with one command. For teaching, it is a self-contained geometric-ML case study that fits a short lab session and runs on any laptop, with each design decision doubling as a benchmark-methodology lesson. For reproducibility, seed-level determinism, a one-command script, machine-readable exports, a \texttt{codemeta.json} descriptor, and an MIT license make the software trivially citable, archivable, and reusable. The path to production data is short: a user with a real 3D AOI camera replaces the body of \texttt{load\_dataset} --- or passes their own X, y --- with code that reads scans, segments joints, and calls \texttt{extract\_features}; all downstream experiments run unchanged. Beyond the classical-ML workflow, the generator's raw point clouds can be passed directly to external deep models (e.g., PointNet \cite{ref8,ref9}); Solderbench supports both scenarios.
+\section{Limitations}
+We state the limitations of Solderbench honestly.
+The generator is a geometric model, not a physics simulator: it does not model wetting dynamics, surface tension, oxidation, or realistic sensor artifacts (occlusion, multi-path reflections, structured-light failure); class distributions are plausible and overlapping, not fitted to production data. Three scope limits remain. First, the five classes are idealized single-fault geometries --- compound defects (e.g., insufficient and collapsed together) are unsupported, although they occur on real-world production lines. Second, the clouds model only the individual joint, omitting substrate, pads, and pins, so board-level context is out of scope. Third, resampling every cloud to a fixed $n_{\mathrm{points}}$ simplifies real sensors, which return a variable point-count, and may alter the point-density distribution.
+\textbf{Consequently, Solderbench is suitable for algorithm prototyping, fair cross-method comparison, and descriptor-level analysis, but its metric values must not be read as predictions of real industrial AOI performance.} Synthetic validation cannot substitute for validation on real scans; the benchmark guarantees only that comparisons made on it are fair, controlled, and exactly reproducible --- a much-needed property currently missing from this research field.
+
+% Zenodo DOI 10.5281/zenodo.22959193 (release v0.1.1) filled in C3 and Data availability.
+\begin{sloppypar}\noindent\textbf{Data availability.} The Solderbench source code and all reproduction scripts are released under the MIT license and archived on Zenodo (doi:\url{10.5281/zenodo.22959193}); the permanent GitHub repository is \url{https://github.com/wqinmin975/pcb}. The benchmark dataset is not stored as a fixed file but generated deterministically at runtime by running \texttt{python examples/run\_benchmark.py}, which regenerates every table and figure in this paper.\end{sloppypar}
+
+\section{Conclusions}
+We presented Solderbench, an open-source, pure-Python synthetic benchmark for 3D PCB solder-joint defect inspection with a parametric five-class generator, seed-level reproducibility, a seven-dimensional feature extractor, six baselines including the industrial S3DA rule, and automated comparison and ablation runners. On the reference benchmark (1250 samples, seed 42) a random forest reaches 0.9440 accuracy and 0.9439 macro-$F_1$. By removing the data-access barrier that fragments 3D solder-joint inspection, Solderbench makes development, comparison, and teaching open and reproducible. Future work: (i) fitting generator parameters to measured scans; (ii) adding sensor-artifact models; (iii) compound-defect taxonomy; (iv) real-data conversion scripts; (v) deep point-cloud model interfaces (e.g. PointNet, PointNet++); and (vi) preset difficulty templates.
+\section{Acknowledgements}
+This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors. Computations were performed with the Solderbench toolkit (MIT license).
+
+\section*{Declaration of competing interest}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+\section*{CRediT authorship contribution statement}
+\textbf{Qinmin Wang:} Conceptualization, Methodology, Software, Writing -- original draft.
+\textbf{Zixin Wang:} Software, Validation, Data curation.
+\textbf{Hongyuan Wang:} Resources, Supervision.
+\textbf{Zongzhong Wang:} Writing -- review \& editing, Supervision, Project administration (Corresponding author).
+\setlength{\bibsep}{0pt}
+\begin{thebibliography}{17}\footnotesize
+\bibitem{ref1}Q. Ling, N.A.M. Isa, Printed circuit board defect detection methods based on image processing, machine learning and deep learning: A survey, IEEE Access 11 (2023) 15921-15944. https://doi.org/10.1109/ACCESS.2023.3245093
+\bibitem{ref2}Y. Zhou, M. Yuan, J. Zhang, G. Ding, S. Qin, Review of vision-based defect detection research and its perspectives for printed circuit board, Journal of Manufacturing Systems 70 (2023) 557-578. https://doi.org/10.1016/j.jmsy.2023.08.019
+\bibitem{ref3}M. Moganti, F. Ercal, Automatic PCB inspection systems, IEEE Potentials 14(3) (1995) 6-10. https://doi.org/10.1109/45.464686
+\bibitem{ref4}W. Dai, A. Mujeeb, M. Erdt, A. Sourin, Soldering defect detection in automatic optical inspection, Advanced Engineering Informatics 43 (2020) 101004. https://doi.org/10.1016/j.aei.2019.101004
+\bibitem{ref5}S. Tang, F. He, X. Huang, J. Yang, Online PCB defect detector on a new PCB defect dataset, arXiv preprint arXiv:1902.06197 (2019). https://doi.org/10.48550/arXiv.1902.06197
+\bibitem{ref6}Y. Xu, Z. Wang, J. Liang, Y. Zhang, J. Feng, W. Miao, J. Wang, G. Pu, S3DA: A 3D point cloud based PCB solder defect detection algorithm, in: S. Liu (Ed.), Software Fault Prevention, Verification, and Validation (SFPVV 2024), Lecture Notes in Computer Science, vol. 15393, Springer, 2025, pp. 115-130. https://doi.org/10.1007/978-981-96-1621-3\_8
+\bibitem{ref7}Q. Hu, K. Hao, B. Wei, H. Li, An efficient solder joint defects method for 3D point clouds with double-flow region attention network, Advanced Engineering Informatics 52 (2022) 101608. https://doi.org/10.1016/j.aei.2022.101608
+\bibitem{ref8}C.R. Qi, H. Su, K. Mo, L.J. Guibas, PointNet: Deep learning on point sets for 3D classification and segmentation, in: Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2017, pp. 652-660. https://doi.org/10.1109/CVPR.2017.16
+\bibitem{ref9}C.R. Qi, L. Yi, H. Su, L.J. Guibas, PointNet++: Deep hierarchical feature learning on point sets in a metric space, in: Advances in Neural Information Processing Systems 30 (NeurIPS), 2017, pp. 5099-5108. https://proceedings.neurips.cc/paper/2017/hash/d8bf84be3800d12f74d8b05e9b89836f-Abstract.html
+\bibitem{ref10}Q.-Y. Zhou, J. Park, V. Koltun, Open3D: A modern library for 3D data processing, arXiv preprint arXiv:1801.09847 (2018). https://arxiv.org/abs/1801.09847
+\bibitem{ref11}L. Breiman, Random forests, Machine Learning 45(1) (2001) 5-32. https://doi.org/10.1023/A:1010933404324
+\bibitem{ref12}C. Cortes, V. Vapnik, Support-vector networks, Machine Learning 20(3) (1995) 273-297. https://doi.org/10.1007/BF00994018
+\bibitem{ref13}F. Pedregosa, G. Varoquaux, A. Gramfort, V. Michel, B. Thirion, O. Grisel, M. Blondel, P. Prettenhofer, R. Weiss, V. Dubourg, J. Vanderplas, A. Passos, D. Cournapeau, M. Brucher, M. Perrot, E. Duchesnay, Scikit-learn: Machine learning in Python, Journal of Machine Learning Research 12 (2011) 2825-2830.
+\bibitem{ref14}C.R. Harris, K.J. Millman, S.J. van der Walt, R. Gommers, P. Virtanen, D. Cournapeau, E. Wieser, J. Taylor, S. Berg, N.J. Smith, et al., Array programming with NumPy, Nature 585 (2020) 357-362. https://doi.org/10.1038/s41586-020-2649-2
+\bibitem{ref15}P. Virtanen, R. Gommers, T.E. Oliphant, M. Haberland, T. Reddy, D. Cournapeau, E. Burovski, P. Peterson, W. Weckesser, J. Bright, et al., SciPy 1.0: Fundamental algorithms for scientific computing in Python, Nature Methods 17 (2020) 261-272. https://doi.org/10.1038/s41592-019-0686-2
+\bibitem{ref16}W. McKinney, Data structures for statistical computing in Python, in: Proceedings of the 9th Python in Science Conference, 2010, pp. 51-56. https://doi.org/10.25080/Majora-92bf1922-00a
+\bibitem{ref17}J.D. Hunter, Matplotlib: A 2D graphics environment, Computing in Science \& Engineering 9(3) (2007) 90-95. https://doi.org/10.1109/MCSE.2007.55
+\end{thebibliography}
+\end{document}
