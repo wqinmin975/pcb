@@ -4,16 +4,16 @@
 # Builds an image that reproduces every number in the paper bit-for-bit:
 #   RF (B6) test accuracy 0.9440 / macro-F1 0.9439 at seed 42.
 #
-# Build:  docker build -t solderbench:0.1.2 .
-# Run:    docker run --rm solderbench:0.1.2            # version banner
-#         docker run --rm solderbench:0.1.2 bench      # full benchmark
-#         docker run --rm solderbench:0.1.2 test       # unit-test suite
+# Build:  docker build -t solderbench:0.1.3 .
+# Run:    docker run --rm solderbench:0.1.3            # version banner
+#         docker run --rm solderbench:0.1.3 bench      # full benchmark
+#         docker run --rm solderbench:0.1.3 test       # unit-test suite
 # ---------------------------------------------------------------------------
 FROM python:3.13-slim
 
 LABEL org.opencontainers.image.title="solderbench" \
       org.opencontainers.image.description="An open-source synthetic benchmark for PCB solder-joint defect inspection algorithm development" \
-      org.opencontainers.image.version="0.1.2" \
+      org.opencontainers.image.version="0.1.3" \
       org.opencontainers.image.source="https://github.com/wqinmin975/pcb" \
       org.opencontainers.image.url="https://doi.org/10.5281/zenodo.22959192" \
       org.opencontainers.image.licenses="MIT"

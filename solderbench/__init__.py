@@ -11,9 +11,9 @@ Public API
 - :func:`load_dataset` -- one-call dataset builder (real-data entry point).
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
-from .baselines import get_baselines
+from .baselines import S3DARuleClassifier, get_baselines, get_s3da_tree_proxy
 from .data import load_dataset
 from .evaluate import (
     confusion_matrix_ours,
@@ -45,6 +45,8 @@ __all__ = [
     "extract_features",
     "features_to_array",
     "get_baselines",
+    "S3DARuleClassifier",
+    "get_s3da_tree_proxy",
     "run_comparison",
     "run_ablation",
     "evaluate_classifier",

@@ -2,13 +2,18 @@
 
 .. important::
 
-   **Real-data integration point.**  To evaluate on real 3D-camera point
-   clouds instead of the synthetic simulator, replace the body of
-   :func:`load_dataset` (or pass your own ``X, y``) with code that reads the
-   real scans, segments individual solder joints, and calls
-   :func:`solderbench.extract_features` to compute the same seven features.
-   All downstream experiments (:func:`run_comparison`, :func:`run_ablation`)
-   work unchanged on the returned ``X, y``.
+   **Real-data integration point (software hook only).**  To evaluate on real
+   3D-camera point clouds instead of the synthetic simulator, replace the body
+   of :func:`load_dataset` (or pass your own ``X, y``) with code that reads the
+   real scans and calls :func:`solderbench.extract_features` to compute the
+   same seven features.  All downstream experiments
+   (:func:`run_comparison`, :func:`run_ablation`) work unchanged on the
+   returned ``X, y``.
+
+   **This package does not implement real-data acquisition, solder-joint
+   segmentation, or pre-processing.**  Users must supply *pre-segmented*
+   solder-joint point clouds (one cloud per joint) at this hook; only the
+   feature extraction and evaluation stages are provided.
 """
 
 from __future__ import annotations

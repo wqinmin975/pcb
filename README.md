@@ -2,7 +2,7 @@
 
 **An open-source synthetic benchmark for PCB solder-joint defect inspection algorithm development.**
 
-[![Version](https://img.shields.io/badge/version-v0.1.2-blue)](https://github.com/wqinmin975/pcb/releases)
+[![Version](https://img.shields.io/badge/version-v0.1.3-blue)](https://github.com/wqinmin975/pcb/releases)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22959192.svg)](https://doi.org/10.5281/zenodo.22959192)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.13-blue.svg)](requirements.txt)
@@ -116,11 +116,11 @@ see [Reproduction environment](#reproduction-environment)).
 ### With Docker
 
 ```bash
-docker build -t solderbench:0.1.2 .
-docker run --rm solderbench:0.1.2            # print the exact pinned environment
-docker run --rm -v "$PWD/results:/app/results" solderbench:0.1.2 \
+docker build -t solderbench:0.1.3 .
+docker run --rm solderbench:0.1.3            # print the exact pinned environment
+docker run --rm -v "$PWD/results:/app/results" solderbench:0.1.3 \
        python examples/run_benchmark.py      # regenerate every table and figure
-docker run --rm solderbench:0.1.2 \
+docker run --rm solderbench:0.1.3 \
        python -m unittest discover tests -v  # run the test suite
 ```
 
@@ -141,9 +141,9 @@ abl = run_ablation(X, y)                         # leave-one-out + single-featur
 print(abl.head(8))
 ```
 
-> **API stability.** The snippet above matches **v0.1.2**; later releases may
+> **API stability.** The snippet above matches **v0.1.3**; later releases may
 > change it. To freeze the exact behaviour, check out the corresponding tag
-> (`git checkout v0.1.2`) or install the archived Zenodo release.
+> (`git checkout v0.1.3`) or install the archived Zenodo release.
 
 ## Reproducing the paper's results
 
@@ -161,7 +161,7 @@ reproduces the reported numbers bit-for-bit.
 
 | No. | Method | Accuracy | Precision | Recall | F1 | CV Acc. (5-fold) |
 |---|---|---|---|---|---|---|
-| B1 | S3DA (volume threshold) | 0.8960 | 0.8990 | 0.8960 | 0.8964 | 0.9234 ± 0.0138 |
+| B1 | S3DA (volume rule) | 0.5600 | 0.4160 | 0.5600 | 0.4588 | 0.5726 ± 0.0301 |
 | B2 | Logistic Regression | 0.9387 | 0.9416 | 0.9387 | 0.9386 | 0.9657 ± 0.0198 |
 | B3 | SVM (RBF) | 0.9387 | 0.9390 | 0.9387 | 0.9385 | 0.9771 ± 0.0177 |
 | B4 | KNN | 0.8933 | 0.8944 | 0.8933 | 0.8921 | 0.9234 ± 0.0168 |
@@ -172,7 +172,7 @@ reproduces the reported numbers bit-for-bit.
 
 | No. | Method | Accuracy | Precision | Recall | macro-F1 | CV Acc. |
 |---|---|---|---|---|---|---|
-| B1 | S3DA (vol. rule) | 0.9131 ± 0.0156 | 0.9164 ± 0.0153 | 0.9131 ± 0.0156 | 0.9136 ± 0.0153 | 0.9184 ± 0.0149 |
+| B1 | S3DA (volume rule) | 0.5632 ± 0.0091 | 0.4245 ± 0.0069 | 0.5632 ± 0.0091 | 0.4636 ± 0.0075 | 0.5675 ± 0.0376 |
 | B2 | Logistic Regression | 0.9579 ± 0.0114 | 0.9588 ± 0.0105 | 0.9579 ± 0.0114 | 0.9578 ± 0.0114 | 0.9625 ± 0.0157 |
 | B3 | SVM (RBF) | 0.9611 ± 0.0119 | 0.9616 ± 0.0119 | 0.9611 ± 0.0119 | 0.9610 ± 0.0119 | 0.9696 ± 0.0115 |
 | B4 | KNN | 0.9253 ± 0.0178 | 0.9272 ± 0.0184 | 0.9253 ± 0.0178 | 0.9249 ± 0.0184 | 0.9239 ± 0.0176 |
@@ -181,12 +181,15 @@ reproduces the reported numbers bit-for-bit.
 
 Reading of the five-seed table — stated conservatively:
 
-* The industrial volume rule S3DA (B1) is already a strong baseline
-  (0.9131 ± 0.0156), confirming that solder volume carries most of the
-  class signal.
-* **Most** learning-based methods improve on the rule; kNN (0.9253) is
-  within one standard deviation of S3DA and is therefore **statistically
-  tied** with it.
+* The original rule-based S3DA (B1) reaches 0.5632 ± 0.0091 — far above the
+  0.20 chance level of the five-class task, confirming that solder volume
+  carries real signal, but far below every learned model. Its recall on
+  bridging and collapse is **exactly zero by construction**: the published
+  rule thresholds volume only, and those two classes are not volume defects.
+  Volume alone is necessary but not sufficient here.
+* **Every** learning-based method beats the rule by a wide margin — even the
+  weakest of them (kNN, 0.9253) leads it by more than 0.36 accuracy, many
+  times the inter-seed standard deviation.
 * RandomForest attains the best *mean test* accuracy (0.9531), but it leads
   GradientBoosting by only 0.0053 while the inter-seed std of that gap is
   0.0065 — the gap is smaller than its own variability, so **we do not claim
@@ -208,11 +211,11 @@ Reproduce with `python examples/run_revision.py`.
 
 | σ | RF Acc. | S3DA Acc. | GB Acc. | Accuracy span over all 6 methods |
 |---|---|---|---|---|
-| 0.005 | 0.9440 | 0.8960 | 0.9413 | [0.8933, 0.9440] |
-| 0.010 | 0.9360 | 0.9013 | 0.9307 | [0.8960, 0.9387] |
-| 0.020 | 0.9173 | 0.8667 | 0.9120 | [0.8667, 0.9307] |
-| 0.050 | 0.8640 | 0.8293 | 0.8560 | [0.8293, 0.8827] |
-| 0.100 | 0.7467 | 0.7200 | 0.7307 | [0.6933, 0.7547] |
+| 0.005 | 0.9440 | 0.5600 | 0.9413 | [0.5600, 0.9440] |
+| 0.010 | 0.9360 | 0.5360 | 0.9307 | [0.5360, 0.9387] |
+| 0.020 | 0.9173 | 0.4800 | 0.9120 | [0.4800, 0.9307] |
+| 0.050 | 0.8640 | 0.2640 | 0.8560 | [0.2640, 0.8827] |
+| 0.100 | 0.7467 | 0.2000 | 0.7307 | [0.2000, 0.7547] |
 
 Accuracy degrades monotonically and gracefully, and the relative ordering of
 methods is preserved.
@@ -221,9 +224,9 @@ methods is preserved.
 
 | Configuration | RF Acc. | S3DA Acc. | Worst-method Acc. |
 |---|---|---|---|
-| narrow (easier) | 0.9653 | 0.9040 | 0.9040 |
-| default | 0.9440 | 0.8960 | 0.8933 |
-| wide (harder) | 0.9440 | 0.8960 | 0.8960 |
+| narrow (easier) | 0.9653 | 0.5760 | 0.5760 |
+| default | 0.9440 | 0.5600 | 0.5600 |
+| wide (harder) | 0.9440 | 0.5173 | 0.5173 |
 
 Difficulty is controllable in the easy direction; widening the overlap does
 not further degrade the seven-feature representation, which stays
@@ -253,12 +256,50 @@ LICENSE             # MIT
 
 ## Using real data
 
+> **`load_dataset()` is a software hook only.** This package does **not**
+> implement real-data acquisition, solder-joint segmentation, or
+> pre-processing. Users must supply *pre-segmented* solder-joint point clouds
+> (one cloud per joint) at this hook; only feature extraction and evaluation
+> are provided.
+
 Replace the body of `solderbench.data.load_dataset` (or pass your own `X, y`
-directly): read the real 3D-camera scans, segment individual solder joints,
-and call `solderbench.extract_features` to compute the same seven features.
-All downstream experiments (`run_comparison`, `run_ablation`) work unchanged.
-The raw point clouds can also be handed directly to external deep models
-(e.g. PointNet / PointNet++).
+directly) with code that reads your pre-segmented joint clouds and calls
+`solderbench.extract_features` to compute the same seven features. All
+downstream experiments (`run_comparison`, `run_ablation`) work unchanged on the
+returned arrays. The raw point clouds can also be handed directly to external
+deep models (e.g. PointNet / PointNet++).
+
+## Baselines, and which S3DA is reported
+
+`get_baselines()` returns six methods (B1–B6). **B1 is the original
+rule-based S3DA of Xu et al. [6]**, not a learned model:
+
+* `S3DARuleClassifier` computes the solder volume by integral summation (the
+  voxel-count descriptor `vol`) and compares it against two **hand-set**
+  acceptance limits, `low_frac = 0.90` and `high_frac = 1.10`, expressed as
+  fractions of a nominal reference volume.
+* The reference volume is calibrated as the **median training-set volume** —
+  unsupervised, using no class label. The rule has no trained parameters, so
+  its output is identical for every seed.
+* Because the published rule thresholds volume alone, it can only emit
+  {good, insufficient, excessive}: **bridging and collapse are not volume
+  defects and are never predicted by it.**
+
+A *learned* variant is shipped for reference only —
+`get_s3da_tree_proxy()`, a shallow decision tree (`max_depth=6`) trained on all
+seven features whose splits are dominated by voxel volume. **No number in the
+manuscript uses this proxy.**
+
+To verify that the reported rule accuracy is not an artefact of tuned limits,
+run the sensitivity sweep:
+
+```bash
+python examples/s3da_threshold_sensitivity.py
+```
+
+which evaluates the rule over five seeds for limits
+`(0.70, 1.30) … (0.95, 1.05)` and writes
+`results/revision/table_s3da_threshold_sensitivity.csv`.
 
 ## Testing
 
@@ -304,7 +345,7 @@ latest release:
              solder-joint defect inspection algorithm development},
   author  = {Wang, Qinmin and Wang, Zixin and Wang, Hongyuan and Wang, Zongzhong},
   year    = {2026},
-  version = {0.1.2},
+  version = {0.1.3},
   doi     = {10.5281/zenodo.22959192},
   url     = {https://github.com/wqinmin975/pcb}
 }
