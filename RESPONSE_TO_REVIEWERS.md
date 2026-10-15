@@ -33,7 +33,9 @@ experiment** with it:
   it against two **hand-set** acceptance limits, `0.90` and `1.10`, expressed
   as fractions of a nominal reference volume.
 * The nominal reference volume is calibrated as the **median volume of the
-  training features only** — unsupervised, using no class label. The rule has
+  training features only** — unsupervised, using no class label. It is derived
+  solely from training-set feature statistics and **never accesses any
+  test-set information or class labels**. The rule has
   no trained parameters, so its decision is deterministic and identical for
   every seed.
 * Because the published rule thresholds volume alone, it can only emit the
